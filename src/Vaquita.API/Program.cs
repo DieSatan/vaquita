@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,10 @@ try
     {
         options.Limits.MaxRequestBodySize = 1 * 1024 * 1024; // 1 MB
     });
+
+    // Accept enums as strings in JSON (e.g. "ByConsumption" instead of 2)
+    builder.Services.ConfigureHttpJsonOptions(options =>
+        options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddScoped<IEventService, EventService>();
