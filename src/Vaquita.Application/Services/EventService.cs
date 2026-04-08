@@ -211,8 +211,9 @@ public class EventService(IEventRepository repository, IEncryptionService encryp
         RecalculateAmounts(participant.Event);
         await repository.UpdateAsync(participant.Event);
 
-        var updated = await repository.GetParticipantByTokenAsync(token);
-        return updated == null ? null : MapToParticipantResponse(updated, true);
+        // Return the in-memory participant directly — no re-query needed.
+        // The tracked entity already reflects all changes after SaveChangesAsync.
+        return MapToParticipantResponse(participant, true);
     }
 
     public async Task<ParticipantResponse?> UpdateItemAsync(string token, Guid itemId, AddConsumptionItemRequest request)
@@ -237,8 +238,7 @@ public class EventService(IEventRepository repository, IEncryptionService encryp
         RecalculateAmounts(participant.Event);
         await repository.UpdateAsync(participant.Event);
 
-        var updated = await repository.GetParticipantByTokenAsync(token);
-        return updated == null ? null : MapToParticipantResponse(updated, true);
+        return MapToParticipantResponse(participant, true);
     }
 
     public async Task<ParticipantResponse?> DeleteItemAsync(string token, Guid itemId)
@@ -254,8 +254,7 @@ public class EventService(IEventRepository repository, IEncryptionService encryp
         RecalculateAmounts(participant.Event);
         await repository.UpdateAsync(participant.Event);
 
-        var updated = await repository.GetParticipantByTokenAsync(token);
-        return updated == null ? null : MapToParticipantResponse(updated, true);
+        return MapToParticipantResponse(participant, true);
     }
 
     public async Task<int> DeleteExpiredEventsAsync()
