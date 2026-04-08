@@ -1,0 +1,6 @@
+@Vaquita.API_HostAddress = http://localhost:5174
+
+GET {{Vaquita.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

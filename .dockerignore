@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/.git/
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/logs/
+**/.env
+**/appsettings.Development.json

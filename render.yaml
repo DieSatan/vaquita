@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: vaquita
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    disk:
+      name: vaquita-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        value: Data Source=/data/vaquita.db
+      - key: Security__EncryptionKey
+        fromGroup: vaquita-secrets

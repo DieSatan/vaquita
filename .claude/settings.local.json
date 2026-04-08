@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet new:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet remove:*)",
+      "Bash(dotnet tool:*)",
+      "Bash(dotnet ef:*)",
+      "Bash(npm create:*)",
+      "Bash(cmd.exe /c \"where node\")",
+      "Bash(cmd.exe /c \"node --version\")",
+      "Read(//c/Program Files/**)",
+      "Read(//c/Users/GustavoAguilera/AppData/Roaming/**)",
+      "Read(//c/Users/GustavoAguilera/AppData/Local/**)",
+      "Bash(powershell.exe -Command \"Get-Command node -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
+      "Bash(dotnet run:*)",
+      "Bash(curl -s http://localhost:5000/health)",
+      "Bash(kill %1)",
+      "Bash(curl -s http://localhost:5174/health)",
+      "Bash(curl -s -X POST http://localhost:5174/api/events -H 'Content-Type: application/json' -d '{:*)",
+      "Bash(curl -s -X POST http://localhost:5174/api/events -H 'Content-Type: application/json' -d '{\"eventName\":\"Asado\",\"organizerName\":\"Pedro\",\"splitMode\":0,\"totalAmount\":60000,\"tipPercentage\":0,\"paymentInfo\":{\"bankName\":\"Banco Estado\",\"accountType\":\"Cuenta Vista\",\"accountNumber\":\"123456789\",\"rut\":\"12.345.678-9\",\"holderName\":\"Pedro Garcia\",\"email\":\"pedro@mail.com\"},\"participants\":[{\"name\":\"Juan\",\"amount\":0},{\"name\":\"Maria\",\"amount\":0}]}')"
+    ]
+  }
+}

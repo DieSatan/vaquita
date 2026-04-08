@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Vaquita.API/Vaquita.API.csproj" />
+    <Project Path="src/Vaquita.Application/Vaquita.Application.csproj" />
+    <Project Path="src/Vaquita.Domain/Vaquita.Domain.csproj" />
+    <Project Path="src/Vaquita.Infrastructure/Vaquita.Infrastructure.csproj" />
+  </Folder>
+</Solution>
