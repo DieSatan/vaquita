@@ -15,6 +15,7 @@ function formatCLP(amount: number) {
 
 export default function ConsumptionTracker({ participant, token, onUpdate }: ConsumptionTrackerProps) {
   const [editItem, setEditItem] = useState<ConsumptionItemDto | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const participantNames: Record<string, string> = {
     [participant.id]: `${participant.name} (tú)`,
@@ -22,20 +23,37 @@ export default function ConsumptionTracker({ participant, token, onUpdate }: Con
   }
 
   const handleAdd = async (data: Parameters<typeof api.addItem>[1]) => {
-    const updated = await api.addItem(token, data)
-    onUpdate(updated)
+    setError(null)
+    try {
+      const updated = await api.addItem(token, data)
+      onUpdate(updated)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al agregar el item')
+      throw e // re-throw so AddItemForm doesn't reset
+    }
   }
 
   const handleUpdate = async (data: Parameters<typeof api.addItem>[1]) => {
     if (!editItem) return
-    const updated = await api.updateItem(token, editItem.id, data)
-    onUpdate(updated)
-    setEditItem(null)
+    setError(null)
+    try {
+      const updated = await api.updateItem(token, editItem.id, data)
+      onUpdate(updated)
+      setEditItem(null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al actualizar el item')
+      throw e
+    }
   }
 
   const handleDelete = async (itemId: string) => {
-    const updated = await api.deleteItem(token, itemId)
-    onUpdate(updated)
+    setError(null)
+    try {
+      const updated = await api.deleteItem(token, itemId)
+      onUpdate(updated)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al eliminar el item')
+    }
   }
 
   const myTotal = participant.items.reduce((s, i) => s + i.lineTotal, 0)

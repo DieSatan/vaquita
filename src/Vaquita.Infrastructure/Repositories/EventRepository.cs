@@ -66,7 +66,11 @@ public class EventRepository(AppDbContext context) : IEventRepository
 
     public async Task UpdateAsync(Event ev)
     {
-        context.Events.Update(ev);
+        // Entity is always loaded (tracked) before calling UpdateAsync,
+        // so EF Core already tracks all changes including new child entities.
+        // Calling context.Events.Update() on an already-tracked entity would
+        // incorrectly change newly-added children (e.g. ConsumptionItem) from
+        // EntityState.Added to EntityState.Modified, causing INSERT to fail.
         await context.SaveChangesAsync();
     }
 
