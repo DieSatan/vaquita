@@ -20,6 +20,23 @@ export default function PayPage() {
       .finally(() => setLoading(false))
   }, [token])
 
+  // Poll every 15s while ByConsumption event is not yet locked,
+  // so participants automatically see payment details when organizer locks.
+  useEffect(() => {
+    if (!token) return
+    if (!participant) return
+    if (participant.splitMode !== 'ByConsumption') return
+    if (participant.isEventLocked) return
+
+    const id = setInterval(() => {
+      api.getParticipant(token)
+        .then(setParticipant)
+        .catch(() => { /* silently ignore poll errors */ })
+    }, 15000)
+
+    return () => clearInterval(id)
+  }, [token, participant?.splitMode, participant?.isEventLocked])
+
   const handleMarkPaid = async () => {
     if (!token) return
     const updated = await api.markPaid(token)

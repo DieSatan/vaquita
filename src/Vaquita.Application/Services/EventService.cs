@@ -212,7 +212,7 @@ public class EventService(IEventRepository repository, IEncryptionService encryp
         await repository.UpdateAsync(participant.Event);
 
         var updated = await repository.GetParticipantByTokenAsync(token);
-        return updated == null ? null : MapToParticipantResponse(updated, false);
+        return updated == null ? null : MapToParticipantResponse(updated, true);
     }
 
     public async Task<ParticipantResponse?> UpdateItemAsync(string token, Guid itemId, AddConsumptionItemRequest request)
@@ -238,7 +238,7 @@ public class EventService(IEventRepository repository, IEncryptionService encryp
         await repository.UpdateAsync(participant.Event);
 
         var updated = await repository.GetParticipantByTokenAsync(token);
-        return updated == null ? null : MapToParticipantResponse(updated, false);
+        return updated == null ? null : MapToParticipantResponse(updated, true);
     }
 
     public async Task<ParticipantResponse?> DeleteItemAsync(string token, Guid itemId)
@@ -255,7 +255,7 @@ public class EventService(IEventRepository repository, IEncryptionService encryp
         await repository.UpdateAsync(participant.Event);
 
         var updated = await repository.GetParticipantByTokenAsync(token);
-        return updated == null ? null : MapToParticipantResponse(updated, false);
+        return updated == null ? null : MapToParticipantResponse(updated, true);
     }
 
     public async Task<int> DeleteExpiredEventsAsync()
