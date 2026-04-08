@@ -90,6 +90,12 @@ export default function ConsumptionTracker({ participant, token, onUpdate }: Con
         />
       )}
 
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
       <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-center">
         <p className="text-sm text-yellow-700">
           ⏳ El organizador cerrará el registro cuando terminen de pedir.
