@@ -17,7 +17,8 @@ public static class DependencyInjection
             ?? "Data Source=vaquita.db";
 
         services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlite(connectionString));
+            options.UseSqlite(connectionString,
+                o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
         services.AddScoped<IEventRepository, EventRepository>();
 
