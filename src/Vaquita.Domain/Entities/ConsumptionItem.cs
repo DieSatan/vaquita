@@ -2,7 +2,7 @@ namespace Vaquita.Domain.Entities;
 
 public class ConsumptionItem
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; }
     public Guid ParticipantId { get; set; }
     public string Description { get; set; } = string.Empty;
     public decimal UnitPrice { get; set; }

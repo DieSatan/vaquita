@@ -19,12 +19,16 @@ public class CleanupService(IServiceScopeFactory scopeFactory, ILogger<CleanupSe
                 if (count > 0)
                     logger.LogInformation("Cleanup: deleted {Count} expired events", count);
             }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Cleanup service error");
             }
 
-            await Task.Delay(TimeSpan.FromHours(6), stoppingToken);
+            await Task.Delay(TimeSpan.FromHours(6), stoppingToken).ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
         }
     }
 }
