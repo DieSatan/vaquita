@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api, EventResponse, EventSummaryResponse } from '../../services/api'
 import ProgressBar from './ProgressBar'
 import ParticipantRow from './ParticipantRow'
@@ -28,6 +28,13 @@ export default function EventDashboard({ event, adminCode, onRefresh }: EventDas
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
+  // Auto-refresh every 30s while ByConsumption event is open
+  useEffect(() => {
+    if (event.splitMode !== 'ByConsumption' || event.isLocked) return
+    const id = setInterval(onRefresh, 30000)
+    return () => clearInterval(id)
+  }, [event.splitMode, event.isLocked, onRefresh])
+
   const handleConfirm = async (participantId: string) => {
     await api.confirmPayment(participantId, adminCode)
     await onRefresh()
@@ -42,6 +49,8 @@ export default function EventDashboard({ event, adminCode, onRefresh }: EventDas
 
   const handleLock = async (tipPct: number) => {
     await api.lockEvent(event.id, adminCode, tipPct)
+    setSummary(null) // reset so next open fetches post-lock amounts
+    setShowSummary(false)
     await onRefresh()
   }
 
