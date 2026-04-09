@@ -17,11 +17,19 @@ public static class ConsumptionEndpoints
             if (!validation.IsValid)
                 return Results.ValidationProblem(validation.ToDictionary());
 
-            var result = await service.AddItemAsync(token, request);
-            if (result == null)
-                return Results.Json(new { message = "No se pudo agregar el item" }, statusCode: 400);
+            try
+            {
+                var result = await service.AddItemAsync(token, request);
+                if (result == null)
+                    return Results.Json(new { message = "No se pudo agregar el item" }, statusCode: 400);
 
-            return Results.Ok(result);
+                return Results.Ok(result);
+            }
+            catch (Exception ex)
+            {
+                // TEMP: surface real exception for debugging
+                return Results.Json(new { message = ex.Message, type = ex.GetType().Name, detail = ex.InnerException?.Message }, statusCode: 500);
+            }
         });
 
         group.MapPut("/{token}/items/{itemId:guid}", async (string token, Guid itemId, AddConsumptionItemRequest request, IEventService service) =>
