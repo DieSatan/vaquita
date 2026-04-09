@@ -30,12 +30,15 @@ public class EventRepository(AppDbContext context) : IEventRepository
 
     public async Task<Participant?> GetParticipantByTokenAsync(string token)
     {
-        return await context.Participants
-            .Include(p => p.Items)
-            .Include(p => p.Event)
-                .ThenInclude(e => e.Participants)
-                    .ThenInclude(p => p.Items)
-            .FirstOrDefaultAsync(p => p.UniqueToken == token);
+        // Load from the Event side with a single Include chain to avoid
+        // multi-path tracking conflicts (same Participant reachable via two
+        // routes confuses EF Core's change tracker on SaveChangesAsync).
+        var ev = await context.Events
+            .Include(e => e.Participants)
+                .ThenInclude(p => p.Items)
+            .FirstOrDefaultAsync(e => e.Participants.Any(p => p.UniqueToken == token));
+
+        return ev?.Participants.FirstOrDefault(p => p.UniqueToken == token);
     }
 
     public async Task<Participant?> GetParticipantByIdAsync(Guid participantId)
