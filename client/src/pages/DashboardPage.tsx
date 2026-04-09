@@ -36,6 +36,8 @@ export default function DashboardPage() {
     }
   }, [])
 
+  const handleRefresh = useCallback(() => loadEvent(id!, adminCode), [id, adminCode, loadEvent])
+
   const handleCodeSubmit = () => {
     if (!id || !codeInput.trim()) return
     const code = codeInput.trim().toUpperCase()
@@ -103,7 +105,7 @@ export default function DashboardPage() {
       <EventDashboard
         event={event}
         adminCode={adminCode}
-        onRefresh={() => loadEvent(id!, adminCode)}
+        onRefresh={handleRefresh}
       />
     </Layout>
   )
