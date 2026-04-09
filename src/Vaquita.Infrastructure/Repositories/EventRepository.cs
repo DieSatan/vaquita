@@ -30,13 +30,20 @@ public class EventRepository(AppDbContext context) : IEventRepository
 
     public async Task<Participant?> GetParticipantByTokenAsync(string token)
     {
-        // Load from the Event side with a single Include chain to avoid
-        // multi-path tracking conflicts (same Participant reachable via two
-        // routes confuses EF Core's change tracker on SaveChangesAsync).
+        // Step 1: resolve the event ID from the token (simple projection, no tracking).
+        var eventId = await context.Participants
+            .Where(p => p.UniqueToken == token)
+            .Select(p => p.EventId)
+            .FirstOrDefaultAsync();
+
+        if (eventId == Guid.Empty) return null;
+
+        // Step 2: load the full event with ALL participants and their items so
+        // RecalculateAmounts has the complete picture before SaveChangesAsync.
         var ev = await context.Events
             .Include(e => e.Participants)
                 .ThenInclude(p => p.Items)
-            .FirstOrDefaultAsync(e => e.Participants.Any(p => p.UniqueToken == token));
+            .FirstOrDefaultAsync(e => e.Id == eventId);
 
         return ev?.Participants.FirstOrDefault(p => p.UniqueToken == token);
     }
