@@ -138,7 +138,7 @@ export default function EventDashboard({ event, adminCode, onRefresh }: EventDas
           eventId={event.id}
           adminCode={adminCode}
           splitMode={event.splitMode}
-          onAdded={updated => { onRefresh() }}
+          onAdded={() => { onRefresh() }}
         />
       </div>
 
