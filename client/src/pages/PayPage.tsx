@@ -39,8 +39,12 @@ export default function PayPage() {
 
   const handleMarkPaid = async () => {
     if (!token) return
-    const updated = await api.markPaid(token)
-    setParticipant(updated)
+    try {
+      const updated = await api.markPaid(token)
+      setParticipant(updated)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al marcar como pagado')
+    }
   }
 
   if (loading) {

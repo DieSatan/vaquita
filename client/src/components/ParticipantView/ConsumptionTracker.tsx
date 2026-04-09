@@ -56,15 +56,20 @@ export default function ConsumptionTracker({ participant, token, onUpdate }: Con
     }
   }
 
-  const myTotal = participant.items.reduce((s, i) => s + i.lineTotal, 0)
+  const myRawTotal = participant.items.reduce((s, i) => s + i.lineTotal, 0)
 
   return (
     <div className="space-y-4">
       <div className="card">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="font-semibold text-gray-900">Tu consumo</h3>
-          <span className="text-green-700 font-bold">{formatCLP(myTotal)}</span>
+          <h3 className="font-semibold text-gray-900">Tu consumo estimado</h3>
+          <span className="text-green-700 font-bold">{formatCLP(participant.amount)}</span>
         </div>
+        {myRawTotal !== participant.amount && (
+          <p className="text-xs text-gray-400 mb-2">
+            Items agregados: {formatCLP(myRawTotal)} · Ajustado por items compartidos
+          </p>
+        )}
 
         <ItemList
           items={participant.items}

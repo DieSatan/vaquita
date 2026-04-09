@@ -34,6 +34,7 @@ public class EventRepository(AppDbContext context) : IEventRepository
             .Include(p => p.Items)
             .Include(p => p.Event)
                 .ThenInclude(e => e.Participants)
+                    .ThenInclude(p => p.Items)
             .FirstOrDefaultAsync(p => p.UniqueToken == token);
     }
 

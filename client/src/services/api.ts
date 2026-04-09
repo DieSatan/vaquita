@@ -115,7 +115,12 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
     let message = `HTTP ${res.status}`
     try {
       const body = await res.json()
-      message = body.message ?? message
+      if (body.errors) {
+        const firstErrors = Object.values(body.errors as Record<string, string[]>).flat()
+        message = firstErrors[0] ?? message
+      } else {
+        message = body.message ?? body.title ?? message
+      }
     } catch { /* ignore */ }
     throw new ApiError(res.status, message)
   }

@@ -29,6 +29,15 @@ function isValidRut(rut: string): boolean {
   return dv === expectedStr
 }
 
+function formatRut(value: string): string {
+  const clean = value.replace(/[^0-9kK]/g, '')
+  if (clean.length < 2) return clean
+  const dv = clean.slice(-1)
+  const body = clean.slice(0, -1)
+  const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  return `${formatted}-${dv}`
+}
+
 export default function PaymentInfoForm({ data, onChange, onNext, onBack }: PaymentInfoFormProps) {
   const rutValid = data.rut === '' || isValidRut(data.rut)
   const valid = data.bankName && data.accountType && data.accountNumber &&
@@ -84,7 +93,7 @@ export default function PaymentInfoForm({ data, onChange, onNext, onBack }: Paym
           className={`input-field ${!rutValid ? 'border-red-400 focus:border-red-400 focus:ring-red-400' : ''}`}
           placeholder="12.345.678-9"
           value={data.rut}
-          onChange={e => onChange({ ...data, rut: e.target.value })}
+          onChange={e => onChange({ ...data, rut: formatRut(e.target.value) })}
           maxLength={12}
         />
         {!rutValid && <p className="text-red-500 text-xs mt-1">RUT inválido. Formato: 12.345.678-9</p>}
