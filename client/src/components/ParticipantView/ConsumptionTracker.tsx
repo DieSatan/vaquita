@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api, ConsumptionItemDto, ParticipantResponse } from '../../services/api'
 import AddItemForm from './AddItemForm'
 import ItemList from './ItemList'
@@ -16,6 +16,13 @@ function formatCLP(amount: number) {
 export default function ConsumptionTracker({ participant, token, onUpdate }: ConsumptionTrackerProps) {
   const [editItem, setEditItem] = useState<ConsumptionItemDto | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const formRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (editItem) {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [editItem])
 
   const participantNames: Record<string, string> = {
     [participant.id]: `${participant.name} (tú)`,
@@ -79,6 +86,7 @@ export default function ConsumptionTracker({ participant, token, onUpdate }: Con
         />
       </div>
 
+      <div ref={formRef}>
       {editItem ? (
         <AddItemForm
           myId={participant.id}
@@ -94,6 +102,7 @@ export default function ConsumptionTracker({ participant, token, onUpdate }: Con
           onSubmit={handleAdd}
         />
       )}
+      </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
