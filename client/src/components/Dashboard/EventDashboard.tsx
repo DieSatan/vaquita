@@ -5,6 +5,7 @@ import ParticipantRow from './ParticipantRow'
 import LockRegistrationBtn from './LockRegistrationBtn'
 import ConsumptionSummary from './ConsumptionSummary'
 import CopyButton from '../ParticipantView/CopyButton'
+import AddParticipantForm from './AddParticipantForm'
 
 interface EventDashboardProps {
   event: EventResponse
@@ -133,6 +134,12 @@ export default function EventDashboard({ event, adminCode, onRefresh }: EventDas
             onRemind={handleRemind}
           />
         ))}
+        <AddParticipantForm
+          eventId={event.id}
+          adminCode={adminCode}
+          splitMode={event.splitMode}
+          onAdded={updated => { onRefresh() }}
+        />
       </div>
 
       <div className="card border-red-100 bg-red-50">

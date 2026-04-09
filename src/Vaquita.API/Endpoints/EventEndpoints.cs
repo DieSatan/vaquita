@@ -80,6 +80,23 @@ public static class EventEndpoints
         })
         .RequireRateLimiting("admin");
 
+        group.MapPost("/{id:guid}/participants", async (Guid id, ParticipantInputDto request, HttpContext ctx, IEventService service) =>
+        {
+            var adminCode = ctx.Request.Headers["X-Admin-Code"].FirstOrDefault();
+            if (string.IsNullOrEmpty(adminCode))
+                return Results.Json(new { message = "Evento no encontrado o código incorrecto" }, statusCode: 401);
+
+            if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 100)
+                return Results.Json(new { message = "Nombre inválido" }, statusCode: 400);
+
+            var result = await service.AddParticipantAsync(id, adminCode, request);
+            if (result == null)
+                return Results.Json(new { message = "Evento no encontrado o código incorrecto" }, statusCode: 401);
+
+            return Results.Ok(result);
+        })
+        .RequireRateLimiting("admin");
+
         group.MapDelete("/{id:guid}", async (Guid id, HttpContext ctx, IEventService service) =>
         {
             var adminCode = ctx.Request.Headers["X-Admin-Code"].FirstOrDefault();

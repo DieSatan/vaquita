@@ -16,5 +16,6 @@ public interface IEventService
     Task<ParticipantResponse?> AddItemAsync(string token, AddConsumptionItemRequest request);
     Task<ParticipantResponse?> UpdateItemAsync(string token, Guid itemId, AddConsumptionItemRequest request);
     Task<ParticipantResponse?> DeleteItemAsync(string token, Guid itemId);
+    Task<EventResponse?> AddParticipantAsync(Guid eventId, string adminCode, ParticipantInputDto participant);
     Task<int> DeleteExpiredEventsAsync();
 }

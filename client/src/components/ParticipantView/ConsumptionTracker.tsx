@@ -89,6 +89,7 @@ export default function ConsumptionTracker({ participant, token, onUpdate }: Con
       <div ref={formRef}>
       {editItem ? (
         <AddItemForm
+          key={editItem.id}
           myId={participant.id}
           otherParticipants={participant.otherParticipants}
           editItem={editItem}
@@ -97,6 +98,7 @@ export default function ConsumptionTracker({ participant, token, onUpdate }: Con
         />
       ) : (
         <AddItemForm
+          key="add"
           myId={participant.id}
           otherParticipants={participant.otherParticipants}
           onSubmit={handleAdd}

@@ -195,6 +195,13 @@ export const api = {
     apiFetch<ParticipantResponse>(`/api/participants/${token}/items/${itemId}`, {
       method: 'DELETE',
     }),
+
+  addParticipant: (eventId: string, adminCode: string, data: ParticipantInputDto) =>
+    apiFetch<EventResponse>(`/api/events/${eventId}/participants`, {
+      method: 'POST',
+      headers: { 'X-Admin-Code': adminCode },
+      body: JSON.stringify(data),
+    }),
 }
 
 export { ApiError }

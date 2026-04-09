@@ -4,7 +4,7 @@ namespace Vaquita.Domain.Entities;
 
 public class Event
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; }
     public string OrganizerName { get; set; } = string.Empty;
     public string EventName { get; set; } = string.Empty;
     public string AdminCode { get; set; } = string.Empty;

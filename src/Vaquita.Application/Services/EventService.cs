@@ -257,6 +257,42 @@ public class EventService(IEventRepository repository, IEncryptionService encryp
         return MapToParticipantResponse(participant, true);
     }
 
+    public async Task<EventResponse?> AddParticipantAsync(Guid eventId, string adminCode, ParticipantInputDto input)
+    {
+        var ev = await repository.GetByIdWithAdminCodeAsync(eventId, adminCode);
+        if (ev == null) return null;
+
+        decimal amount = ev.SplitMode switch
+        {
+            SplitMode.Even => ev.Participants.Count > 0
+                ? ev.Participants.First().Amount  // same as existing participants
+                : 0,
+            SplitMode.Custom => input.Amount,
+            _ => 0  // ByConsumption: starts at 0
+        };
+
+        var participant = new Participant
+        {
+            Name = input.Name,
+            Phone = input.Phone,
+            Amount = amount,
+            UniqueToken = GenerateUniqueToken()
+        };
+
+        ev.Participants.Add(participant);
+
+        // Recalculate even split if needed
+        if (ev.SplitMode == SplitMode.Even && ev.TotalAmount > 0)
+        {
+            var perPerson = Math.Round(ev.TotalAmount / ev.Participants.Count, 0, MidpointRounding.AwayFromZero);
+            foreach (var p in ev.Participants)
+                p.Amount = perPerson;
+        }
+
+        await repository.UpdateAsync(ev);
+        return MapToEventResponse(ev);
+    }
+
     public async Task<int> DeleteExpiredEventsAsync()
     {
         var expired = await repository.GetExpiredEventsAsync();
