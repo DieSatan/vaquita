@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Vaquita.Application.DTOs;
 using Vaquita.Application.Interfaces;
 using Vaquita.Application.Validators;
@@ -24,6 +25,18 @@ public static class ConsumptionEndpoints
                     return Results.Json(new { message = "No se pudo agregar el item" }, statusCode: 400);
 
                 return Results.Ok(result);
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                // TEMP: identify which entity is failing the concurrency check
+                var entries = ex.Entries.Select(e => new
+                {
+                    entity = e.Entity.GetType().Name,
+                    state  = e.State.ToString(),
+                    dbValues    = e.GetDatabaseValues()?.ToObject()?.ToString(),
+                    currentValues = e.CurrentValues?.ToObject()?.ToString()
+                }).ToList();
+                return Results.Json(new { message = ex.Message, type = "DbUpdateConcurrencyException", entries }, statusCode: 500);
             }
             catch (Exception ex)
             {
