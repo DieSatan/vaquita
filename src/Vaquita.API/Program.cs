@@ -9,6 +9,9 @@ using Vaquita.Application.Services;
 using Vaquita.Infrastructure;
 using Vaquita.Infrastructure.Data;
 
+// Required for Npgsql: allows DateTime (Kind=Unspecified/Local) without forcing UTC-only
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
     .CreateBootstrapLogger();

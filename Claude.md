@@ -13,7 +13,7 @@
 ### Backend
 - **.NET 9** Web API (Minimal APIs)
 - **Clean Architecture**: Domain → Application → Infrastructure → API
-- **EF Core 9** con **SQLite** (MVP, migrable a PostgreSQL)
+- **EF Core 9** con **Neon PostgreSQL** (free tier), provider `Npgsql.EntityFrameworkCore.PostgreSQL`
 - **Serilog** para logging estructurado
 - Autenticación simplificada: el organizador se identifica con un código único por evento (sin registro de usuario para el MVP)
 
@@ -24,7 +24,8 @@
 - Sin framework de estado complejo — `useState`/`useContext` es suficiente para el MVP
 
 ### Infraestructura
-- **Render.com** free tier (contenedor Docker único con persistent disk)
+- **Render.com** free tier (contenedor Docker único)
+- **Neon PostgreSQL** free tier (0.5 GB, scale-to-zero) como base de datos externa
 - HTTPS automático (Let's Encrypt)
 - Auto-deploy desde GitHub (push a main)
 - Subdomain gratuito: `vaquita.onrender.com`
@@ -290,7 +291,7 @@ Abre link → Ve cuánto debe + datos bancarios con botón copiar → Marca como
 
 ### Fase 1: Backend base
 1. Crear solution con Clean Architecture (4 proyectos)
-2. Configurar EF Core + SQLite + migraciones
+2. Configurar EF Core + Npgsql (Neon PostgreSQL) + migraciones
 3. Implementar entidades (Event, Participant, PaymentInfo, ConsumptionItem) y DbContext
 4. Crear repositorio y servicio de eventos
 5. Exponer endpoints de evento y participantes con Minimal APIs
@@ -328,11 +329,13 @@ Abre link → Ve cuánto debe + datos bancarios con botón copiar → Marca como
 1. Crear Dockerfile multi-stage (frontend build + backend build + runtime)
 2. Configurar Program.cs para servir React desde wwwroot + fallback SPA
 3. Agregar health check endpoint
-4. Crear `render.yaml` con persistent disk para SQLite
-5. Configurar env vars en Render (EncryptionKey, ConnectionString, Environment)
-6. Conectar repositorio GitHub → auto-deploy en push a main
-7. Verificar checklist de seguridad pre-deploy
-8. Opcionalmente agregar GitHub Action para CI (dotnet test)
+4. Crear proyecto en [neon.tech](https://neon.tech) y obtener connection string PostgreSQL
+5. Regenerar migraciones de EF Core con provider Npgsql (`dotnet ef migrations add InitialCreate` con Npgsql configurado)
+6. Crear `render.yaml` sin persistent disk (la DB es externa en Neon)
+7. Configurar env vars en Render: `ConnectionStrings__DefaultConnection` (Neon), `Security__EncryptionKey`, `ASPNETCORE_ENVIRONMENT`
+8. Conectar repositorio GitHub → auto-deploy en push a main
+9. Verificar checklist de seguridad pre-deploy
+10. Opcionalmente agregar GitHub Action para CI (dotnet test)
 
 ### Fase 6: Polish
 1. Integración WhatsApp (links con mensaje pre-armado)
@@ -348,7 +351,7 @@ Abre link → Ve cuánto debe + datos bancarios con botón copiar → Marca como
 | Decisión | Elección | Razón |
 |----------|----------|-------|
 | Auth | Sin auth, AdminCode por evento | Simplicidad. No necesitamos cuentas de usuario |
-| DB | SQLite | Zero config, un archivo, perfecto para MVP |
+| DB | Neon PostgreSQL (free tier) | SQLite no persiste en contenedores efímeros de Render (el disco se pierde al reiniciar). Neon es externa, persiste independiente del contenedor, free tier 0.5 GB |
 | Hosting | Render.com free tier (contenedor único) | Gratis, subdomain incluido, soporta Docker |
 | Frontend | Servido desde wwwroot del mismo proyecto .NET | Un solo deploy, zero config CORS |
 | Pagos | No se manejan | Evitar regulación CMF |
@@ -366,7 +369,6 @@ La app se despliega como **un solo contenedor Docker** que sirve tanto la API .N
 **¿Por qué Render?**
 - Free tier con subdomain incluido (ej: `vaquita.onrender.com`) → no necesitas dominio
 - Soporta Docker nativamente
-- Persistent disk disponible (necesario para SQLite)
 - HTTPS automático con Let's Encrypt
 - Auto-deploy desde GitHub
 - Se apaga tras 15 min de inactividad (cold start ~30s, aceptable para uso ocasional)
@@ -413,17 +415,35 @@ services:
     runtime: docker
     plan: free
     healthCheckPath: /health
-    disk:
-      name: vaquita-data
-      mountPath: /data
-      sizeGB: 1
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
       - key: ConnectionStrings__DefaultConnection
-        value: Data Source=/data/vaquita.db
+        fromGroup: vaquita-secrets  # Connection string de Neon PostgreSQL
       - key: Security__EncryptionKey
         fromGroup: vaquita-secrets
+```
+
+### Configuración de Neon
+
+1. Crear cuenta en [neon.tech](https://neon.tech) (free tier, sin tarjeta de crédito)
+2. Crear un nuevo proyecto → copiar la **connection string** (formato `postgresql://user:pass@host/db?sslmode=require`)
+3. En Render, ir a **Environment Groups** → crear grupo `vaquita-secrets` → agregar:
+   - `ConnectionStrings__DefaultConnection` = connection string de Neon
+   - `Security__EncryptionKey` = key de encriptación (mínimo 32 bytes random)
+4. El contenedor de Render se conecta a Neon por red; al reiniciarse, la DB persiste
+
+### Configuración de EF Core con Npgsql
+
+```csharp
+// En Vaquita.Infrastructure/DependencyInjection.cs
+services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+```
+
+```xml
+<!-- En Vaquita.Infrastructure/Vaquita.Infrastructure.csproj -->
+<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.*" />
 ```
 
 ### Servir React desde .NET

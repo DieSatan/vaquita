@@ -7,5 +7,7 @@ services:
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
+      - key: ConnectionStrings__DefaultConnection
+        fromGroup: vaquita-secrets
       - key: Security__EncryptionKey
         fromGroup: vaquita-secrets
