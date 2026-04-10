@@ -12,7 +12,7 @@ Creado por **Gustavo Aguilera P.**
 
 ### Para el organizador
 1. Crea el evento con nombre, datos bancarios y modo de división
-2. Agrega los participantes
+2. Agrega los participantes manualmente o importa un archivo JSON
 3. Comparte los links individuales (o QR, o por WhatsApp)
 4. Desde el dashboard confirma los pagos a medida que llegan
 
@@ -27,7 +27,7 @@ Creado por **Gustavo Aguilera P.**
 |------|-------------|
 | ⚖️ **Parejo** | El total se divide en partes iguales |
 | ✏️ **Manual** | El organizador asigna cuánto paga cada uno |
-| 🍺 **Por consumo** | Cada participante registra lo que pidió, con soporte para items compartidos y propina |
+| 🍺 **Por consumo** | Cada participante registra lo que pidió, con soporte para items compartidos y propina prorrateada |
 
 ---
 
@@ -35,7 +35,7 @@ Creado por **Gustavo Aguilera P.**
 
 ### Backend
 - **.NET 9** — Minimal APIs, Clean Architecture
-- **EF Core 9** + **SQLite** (un archivo, zero config)
+- **EF Core 9** + **Neon PostgreSQL** (free tier, external, persists across deploys)
 - **Serilog** para logging estructurado
 - **FluentValidation** para validación de inputs
 
@@ -47,7 +47,7 @@ Creado por **Gustavo Aguilera P.**
 ### Infraestructura
 - **Docker** — contenedor único (API + frontend estático)
 - **Render.com** — free tier, auto-deploy desde GitHub, HTTPS automático
-- **SQLite** en persistent disk de Render
+- **Neon PostgreSQL** — base de datos externa, persiste independiente del contenedor
 
 ---
 
@@ -58,7 +58,7 @@ La app maneja datos bancarios sensibles (RUT, número de cuenta) y aplica múlti
 - **AES-256** para datos bancarios en reposo (AccountNumber, RUT, Email, HolderName)
 - **Tokens criptográficos**: AdminCode (8 hex = 4.294.967.296 combinaciones), UniqueToken (22 chars base64url = 2¹²⁸)
 - **AdminCode en header** `X-Admin-Code` — nunca en query string ni logs
-- **Rate limiting**: 100 req/min global, 10/5min en endpoints admin, 5/hr en creación
+- **Rate limiting**: 100 req/min global, 20/5min en endpoints admin, 5/hr en creación
 - **Security headers**: CSP, X-Frame-Options, Referrer-Policy, etc.
 - **Anti-enumeración**: misma respuesta para "no existe" y "código incorrecto"
 - **Expiración automática**: eventos eliminados a los 7 días
@@ -71,21 +71,28 @@ La app maneja datos bancarios sensibles (RUT, número de cuenta) y aplica múlti
 
 ### Requisitos
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
-- [Node.js 20+](https://nodejs.org) (para el frontend)
+- [Node.js 20+](https://nodejs.org)
+- Una base de datos PostgreSQL (local o una instancia gratuita en [neon.tech](https://neon.tech))
 
 ### Backend
 
 ```bash
 # Clonar el repo
-git clone https://github.com/TU_USUARIO/vaquita.git
+git clone https://github.com/DieSatan/vaquita.git
 cd vaquita
 
-# Correr la API (aplica migraciones automáticamente)
+# Configurar connection string vía user secrets (no queda en el código)
+dotnet user-secrets init --project src/Vaquita.API
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
+  "Host=...;Database=...;Username=...;Password=...;SSL Mode=Require;Trust Server Certificate=true" \
+  --project src/Vaquita.API
+
+# Correr la API (aplica migraciones automáticamente al arrancar)
 dotnet run --project src/Vaquita.API
 ```
 
 La API queda disponible en `http://localhost:5174`
-Swagger UI disponible en `http://localhost:5174/swagger`
+Swagger UI disponible en `http://localhost:5174/swagger` (solo en desarrollo)
 
 ### Frontend (desarrollo)
 
@@ -102,6 +109,7 @@ El frontend queda en `http://localhost:5173` con proxy a la API.
 ```bash
 docker build -t vaquita .
 docker run -p 8080:8080 \
+  -e ConnectionStrings__DefaultConnection="Host=...;Database=...;Username=...;Password=...;SSL Mode=Require;Trust Server Certificate=true" \
   -e Security__EncryptionKey="tu-clave-secreta-minimo-32-chars" \
   vaquita
 ```
@@ -138,17 +146,38 @@ vaquita/
 ## Despliegue en Render.com
 
 1. Haz fork/clone y sube a GitHub
-2. En Render → **New Web Service** → conecta el repo
-3. Render detecta el `Dockerfile` automáticamente
-4. Crea un **Environment Group** llamado `vaquita-secrets` con:
+2. Crea una base de datos gratuita en [neon.tech](https://neon.tech) y copia la connection string
+3. En Render → **Environment Groups** → crea un grupo `vaquita-secrets` con:
    ```
-   Security__EncryptionKey = <clave-aleatoria-segura-32+-chars>
+   ConnectionStrings__DefaultConnection = <connection string de Neon en formato key-value>
+   Security__EncryptionKey             = <clave aleatoria segura, mínimo 32 chars>
    ```
-5. Cada `git push` a `main` despliega automáticamente
+4. En Render → **New Web Service** → conecta el repo → linkea el environment group
+5. Render detecta el `Dockerfile` y despliega automáticamente
+6. Cada `git push` a `main` redespliega
 
 La app queda en `https://vaquita.onrender.com`
 
 > **Nota**: El free tier de Render se duerme tras 15 min de inactividad. El cold start toma ~30 segundos.
+
+---
+
+## Importar participantes desde JSON
+
+En el paso de agregar participantes, el botón **📂 Importar JSON** carga un archivo con la siguiente estructura:
+
+```json
+[
+  { "nombre": "Juan García", "numero": "+56912345678" },
+  { "nombre": "María López", "numero": "+56987654321" },
+  { "nombre": "Pedro"  }
+]
+```
+
+- `numero` es opcional
+- En modo Manual se puede incluir `"monto": 15000` por participante
+- También acepta los campos en inglés: `name`, `phone`, `amount`
+- Máximo 50 participantes
 
 ---
 
