@@ -25,15 +25,9 @@ public static class ConsumptionEndpoints
 
                 return Results.Ok(result);
             }
-            catch (Exception ex)
+            catch (InvalidOperationException ex) when (ex.Message == "LOCKED")
             {
-                return Results.Json(new
-                {
-                    message = ex.Message,
-                    type = ex.GetType().Name,
-                    detail = ex.InnerException?.Message,
-                    stack = ex.StackTrace?.Split('\n').Take(5)
-                }, statusCode: 500);
+                return Results.Json(new { message = "El registro está cerrado. No puedes agregar más items." }, statusCode: 423);
             }
         });
 
@@ -44,20 +38,34 @@ public static class ConsumptionEndpoints
             if (!validation.IsValid)
                 return Results.ValidationProblem(validation.ToDictionary());
 
-            var result = await service.UpdateItemAsync(token, itemId, request);
-            if (result == null)
-                return Results.Json(new { message = "No se pudo actualizar el item" }, statusCode: 400);
+            try
+            {
+                var result = await service.UpdateItemAsync(token, itemId, request);
+                if (result == null)
+                    return Results.Json(new { message = "No se pudo actualizar el item" }, statusCode: 400);
 
-            return Results.Ok(result);
+                return Results.Ok(result);
+            }
+            catch (InvalidOperationException ex) when (ex.Message == "LOCKED")
+            {
+                return Results.Json(new { message = "El registro está cerrado. No puedes editar items." }, statusCode: 423);
+            }
         });
 
         group.MapDelete("/{token}/items/{itemId:guid}", async (string token, Guid itemId, IEventService service) =>
         {
-            var result = await service.DeleteItemAsync(token, itemId);
-            if (result == null)
-                return Results.Json(new { message = "No se pudo eliminar el item" }, statusCode: 400);
+            try
+            {
+                var result = await service.DeleteItemAsync(token, itemId);
+                if (result == null)
+                    return Results.Json(new { message = "No se pudo eliminar el item" }, statusCode: 400);
 
-            return Results.Ok(result);
+                return Results.Ok(result);
+            }
+            catch (InvalidOperationException ex) when (ex.Message == "LOCKED")
+            {
+                return Results.Json(new { message = "El registro está cerrado. No puedes eliminar items." }, statusCode: 423);
+            }
         });
 
         return app;

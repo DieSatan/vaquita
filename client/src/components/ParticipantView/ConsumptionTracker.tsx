@@ -29,6 +29,9 @@ export default function ConsumptionTracker({ participant, token, onUpdate }: Con
     ...Object.fromEntries(participant.otherParticipants.map(p => [p.id, p.name]))
   }
 
+  const refreshOnLock = () =>
+    api.getParticipant(token).then(onUpdate).catch(() => {})
+
   const handleAdd = async (data: Parameters<typeof api.addItem>[1]) => {
     setError(null)
     try {
@@ -36,6 +39,7 @@ export default function ConsumptionTracker({ participant, token, onUpdate }: Con
       onUpdate(updated)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al agregar el item')
+      refreshOnLock()
       throw e // re-throw so AddItemForm doesn't reset
     }
   }
@@ -49,6 +53,7 @@ export default function ConsumptionTracker({ participant, token, onUpdate }: Con
       setEditItem(null)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al actualizar el item')
+      refreshOnLock()
       throw e
     }
   }
@@ -60,6 +65,7 @@ export default function ConsumptionTracker({ participant, token, onUpdate }: Con
       onUpdate(updated)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al eliminar el item')
+      refreshOnLock()
     }
   }
 

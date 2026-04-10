@@ -191,7 +191,7 @@ public class EventService(IEventRepository repository, IEncryptionService encryp
     {
         var participant = await repository.GetParticipantByTokenAsync(token);
         if (participant == null) return null;
-        if (participant.Event.IsLocked) return null;
+        if (participant.Event.IsLocked) throw new InvalidOperationException("LOCKED");
 
         var item = new ConsumptionItem
         {
@@ -220,7 +220,7 @@ public class EventService(IEventRepository repository, IEncryptionService encryp
     {
         var participant = await repository.GetParticipantByTokenAsync(token);
         if (participant == null) return null;
-        if (participant.Event.IsLocked) return null;
+        if (participant.Event.IsLocked) throw new InvalidOperationException("LOCKED");
 
         var item = participant.Items.FirstOrDefault(i => i.Id == itemId);
         if (item == null) return null;
@@ -245,7 +245,7 @@ public class EventService(IEventRepository repository, IEncryptionService encryp
     {
         var participant = await repository.GetParticipantByTokenAsync(token);
         if (participant == null) return null;
-        if (participant.Event.IsLocked) return null;
+        if (participant.Event.IsLocked) throw new InvalidOperationException("LOCKED");
 
         var item = participant.Items.FirstOrDefault(i => i.Id == itemId);
         if (item == null) return null;
