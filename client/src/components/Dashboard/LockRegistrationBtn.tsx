@@ -8,12 +8,20 @@ export default function LockRegistrationBtn({ onLock }: LockRegistrationBtnProps
   const [tipPct, setTipPct] = useState('10')
   const [loading, setLoading] = useState(false)
   const [confirm, setConfirm] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleLock = async () => {
     if (!confirm) { setConfirm(true); return }
     setLoading(true)
-    try { await onLock(Number(tipPct) || 0) }
-    finally { setLoading(false); setConfirm(false) }
+    setError(null)
+    try {
+      await onLock(Number(tipPct) || 0)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al cerrar el registro')
+    } finally {
+      setLoading(false)
+      setConfirm(false)
+    }
   }
 
   return (
@@ -40,6 +48,10 @@ export default function LockRegistrationBtn({ onLock }: LockRegistrationBtnProps
         <p className="text-sm text-red-700 font-medium">
           ⚠️ ¿Estás seguro? Esta acción no se puede deshacer.
         </p>
+      )}
+
+      {error && (
+        <p className="text-sm text-red-700 font-medium">❌ {error}</p>
       )}
 
       <button

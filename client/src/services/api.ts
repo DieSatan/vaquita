@@ -106,9 +106,10 @@ class ApiError extends Error {
 }
 
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
+  const { headers: optHeaders, ...restOptions } = options ?? {}
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    ...options,
+    headers: { 'Content-Type': 'application/json', ...optHeaders },
+    ...restOptions,
   })
 
   if (!res.ok) {
