@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import { SplitMode } from '../../services/api'
 
 interface ParticipantInput {
@@ -23,6 +24,9 @@ function formatCLP(amount: number) {
 export default function ParticipantsForm({
   participants, splitMode, totalAmount, onChange, onSubmit, onBack, loading
 }: ParticipantsFormProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [importError, setImportError] = useState<string | null>(null)
+
   const perPerson = participants.length > 0 && splitMode === 'Even'
     ? Math.round(totalAmount / participants.length)
     : 0
@@ -42,6 +46,45 @@ export default function ParticipantsForm({
 
   const updateParticipant = (idx: number, field: keyof ParticipantInput, value: string) => {
     onChange(participants.map((p, i) => i === idx ? { ...p, [field]: value } : p))
+  }
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setImportError(null)
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      try {
+        const raw = JSON.parse(ev.target?.result as string)
+        const arr = Array.isArray(raw) ? raw : [raw]
+
+        const parsed: ParticipantInput[] = arr
+          .map((item: Record<string, unknown>) => ({
+            name: String(item.nombre ?? item.name ?? '').trim().slice(0, 100),
+            phone: String(item.numero ?? item.phone ?? '').trim().slice(0, 20),
+            amount: String(item.monto ?? item.amount ?? '').trim(),
+          }))
+          .filter(p => p.name)
+
+        if (parsed.length === 0) {
+          setImportError('El archivo no contiene participantes con nombre válido.')
+          return
+        }
+        if (parsed.length > 50) {
+          setImportError(`El archivo tiene ${parsed.length} participantes. Máximo 50.`)
+          return
+        }
+
+        onChange(parsed)
+      } catch {
+        setImportError('El archivo no es un JSON válido.')
+      } finally {
+        // Reset so the same file can be re-imported if needed
+        e.target.value = ''
+      }
+    }
+    reader.readAsText(file)
   }
 
   const allNamed = participants.every(p => p.name.trim())
@@ -129,13 +172,43 @@ export default function ParticipantsForm({
         ))}
       </div>
 
-      <button
-        onClick={addParticipant}
-        className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-green-400 hover:text-green-600 transition-colors"
-        disabled={participants.length >= 50}
-      >
-        + Agregar participante
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={addParticipant}
+          className="flex-1 py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-green-400 hover:text-green-600 transition-colors"
+          disabled={participants.length >= 50}
+        >
+          + Agregar participante
+        </button>
+
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="py-3 px-4 border-2 border-dashed border-blue-300 rounded-xl text-blue-500 hover:border-blue-500 hover:text-blue-700 transition-colors text-sm whitespace-nowrap"
+          title={`Formato: [{"nombre":"Juan","numero":"+56912345678"}]`}
+        >
+          📂 Importar JSON
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json,application/json"
+          className="hidden"
+          onChange={handleImport}
+        />
+      </div>
+
+      {importError && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
+          ❌ {importError}
+          <details className="mt-1 text-xs text-red-500">
+            <summary className="cursor-pointer">Ver formato esperado</summary>
+            <pre className="mt-1 overflow-x-auto">{`[
+  { "nombre": "Juan", "numero": "+56912345678" },
+  { "nombre": "María", "numero": "+56987654321" }
+]`}</pre>
+          </details>
+        </div>
+      )}
 
       <div className="flex gap-3">
         <button className="btn-secondary flex-1" onClick={onBack} disabled={loading}>
